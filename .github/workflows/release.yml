@@ -1,0 +1,118 @@
+name: Windows release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      PYTHONUTF8: '1'
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pip install -e . --no-deps
+      - run: python -m pytest -q
+      - name: Prepare version and release notes
+        shell: python
+        run: |
+          import os
+          import re
+          import tomllib
+          from pathlib import Path
+          version = tomllib.loads(Path('pyproject.toml').read_text(encoding='utf-8'))['project']['version']
+          if os.environ['GITHUB_EVENT_NAME'] == 'push' and os.environ['GITHUB_REF_NAME'] != 'v' + version:
+              raise SystemExit('Tag and package version differ')
+          changelog = Path('CHANGELOG.md').read_text(encoding='utf-8')
+          match = re.search(r'^## ' + re.escape(version) + r'\s*\n(.*?)(?=^## |\Z)', changelog, re.M | re.S)
+          if not match or not match[1].strip():
+              raise SystemExit('Missing CHANGELOG section')
+          Path('release-notes.md').write_text(match[1].strip() + '\n', encoding='utf-8')
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as f:
+              f.write('RELEASE_VERSION=' + version + '\n')
+      - run: python -m PyInstaller --clean --noconfirm packaging/galpanel2.spec
+      - name: Smoke test console entries and bundled GUI assets
+        run: |
+          & ./dist/GalPanel2/galpanel2-agent.exe --help
+          if ($LASTEXITCODE -ne 0) { throw 'agent smoke test failed' }
+          & ./dist/GalPanel2/galpanel2-mcp.exe --help
+          if ($LASTEXITCODE -ne 0) { throw 'MCP smoke test failed' }
+          $p = Start-Process ./dist/GalPanel2/GalPanel2.exe -ArgumentList '--screen','title','--screenshot',"$env:RUNNER_TEMP/packaged-title.png" -Wait -PassThru
+          if ($p.ExitCode -ne 0 -or !(Test-Path "$env:RUNNER_TEMP/packaged-title.png")) { throw 'GUI smoke test failed' }
+      - name: Build current-user installer
+        shell: pwsh
+        run: |
+          $iscc = Get-Command ISCC.exe -ErrorAction SilentlyContinue
+          $compiler = if ($iscc) { $iscc.Source } else { "${env:ProgramFiles(x86)}/Inno Setup 6/ISCC.exe" }
+          if (!(Test-Path $compiler)) {
+            choco install innosetup -y --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'Inno Setup installation failed' }
+            $iscc = Get-Command ISCC.exe -ErrorAction SilentlyContinue
+            if ($iscc) { $compiler = $iscc.Source }
+          }
+          if (!(Test-Path $compiler)) { throw 'ISCC.exe not found' }
+          & $compiler "/DAppVersion=$env:RELEASE_VERSION" packaging/galpanel2.iss
+          if ($LASTEXITCODE -ne 0) { throw 'Inno Setup build failed' }
+          Move-Item "dist/GalPanel2-Setup-${env:RELEASE_VERSION}.exe" .
+      - name: Zip Windows folder and generate SHA256 manifest
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist/GalPanel2 -DestinationPath "GalPanel2-${env:RELEASE_VERSION}-win64.zip"
+          $files = @("GalPanel2-Setup-${env:RELEASE_VERSION}.exe", "GalPanel2-${env:RELEASE_VERSION}-win64.zip")
+          $lines = foreach ($file in $files) {
+            $hash = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $file"
+          }
+          $lines | Set-Content SHA256SUMS.txt -Encoding ascii
+      - name: Smoke test one-line installer, portable mode, upgrade and uninstall
+        shell: pwsh
+        run: |
+          # Exercise Windows PowerShell 5.1 (the default Windows shell), without fetching a previous release.
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File packaging/test-install.ps1 -Version $env:RELEASE_VERSION
+          if ($LASTEXITCODE -ne 0) { throw 'Install / upgrade / uninstall smoke test failed' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GalPanel2-${{ env.RELEASE_VERSION }}-win64
+          path: |
+            GalPanel2-Setup-${{ env.RELEASE_VERSION }}.exe
+            GalPanel2-${{ env.RELEASE_VERSION }}-win64.zip
+            SHA256SUMS.txt
+          if-no-files-found: error
+  publish:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: GalPanel2-*-win64
+          merge-multiple: true
+      - name: Extract release notes
+        shell: python
+        run: |
+          import os, re
+          from pathlib import Path
+          version = os.environ['GITHUB_REF_NAME'].removeprefix('v')
+          text = Path('CHANGELOG.md').read_text(encoding='utf-8')
+          match = re.search(r'^## ' + re.escape(version) + r'\s*\n(.*?)(?=^## |\Z)', text, re.M | re.S)
+          if not match:
+              raise SystemExit('Missing release notes')
+          Path('release-notes.md').write_text(match[1].strip() + '\n', encoding='utf-8')
+      - uses: softprops/action-gh-release@v2
+        with:
+          body_path: release-notes.md
+          files: |
+            GalPanel2-Setup-*.exe
+            GalPanel2-*-win64.zip
+            SHA256SUMS.txt
+          fail_on_unmatched_files: true

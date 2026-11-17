@@ -7,15 +7,15 @@ import sys
 from galpanel2.identify import ai, pipeline
 
 FAKE_AI = r'''
-import json, os, sys
+import json, os, sys, tempfile
 args = sys.argv[1:]
 counter = os.environ["FAKE_COUNTER"]
-with open(counter, "a", encoding="utf-8") as f:
-    f.write("x\n")
+# 每次调用建一个独立文件计数：Windows 上多进程追加同一文件会丢行
+os.close(tempfile.mkstemp(dir=counter, suffix=".call")[0])
 prompt = open(args[args.index("--task") + 1], encoding="utf-8").read()
 out = args[args.index("--out") + 1]
 behaviour = os.environ.get("FAKE_BEHAVIOUR", "")
-n = sum(1 for _ in open(counter, encoding="utf-8"))
+n = len(os.listdir(counter))
 if behaviour == "fail" or (behaviour == "fail_first" and n == 1):
     sys.exit(3)
 if behaviour == "garbage":
@@ -60,14 +60,14 @@ def fake_ai(tmp_path, monkeypatch, behaviour=""):
     d.mkdir()
     script = d / "fake_ai.py"
     script.write_text(FAKE_AI, encoding="utf-8")
-    counter = d / "calls.txt"
-    counter.write_text("", encoding="utf-8")
+    counter = d / "calls"
+    counter.mkdir()
     monkeypatch.setenv("FAKE_COUNTER", str(counter))
     monkeypatch.setenv("FAKE_BEHAVIOUR", behaviour)
     argv = [sys.executable, str(script), "--task", "{prompt}", "--out", "{out}",
             "--dir", "{dir}", "--timeout", "{timeout}"]
     cfg = ai.AiConfig(argv, "file", 20)
-    calls = lambda: len(counter.read_text(encoding="utf-8").splitlines())  # noqa: E731
+    calls = lambda: len(list(counter.iterdir()))  # noqa: E731
     return cfg, calls
 
 

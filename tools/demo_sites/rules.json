@@ -1,0 +1,64 @@
+{
+  "rules": [
+    {
+      "method": "POST",
+      "url_prefix": "https://api.vndb.org/kana/vn",
+      "json": {
+        "results": [
+          {
+            "id": "vDEMO002",
+            "title": "星屑の郵便庭",
+            "alttitle": "星屑の郵便庭",
+            "image": {"url": "https://example.invalid/demo/vDEMO002.png"},
+            "released": "2025-06-12",
+            "description": "【虚构演示资料】在星屑落满的庭院中，邮递员收集寄往未来的信。此候选仅用于离线截图。",
+            "developers": [
+              {
+                "id": "pDEMO002",
+                "name": "星屑便箋工房"
+              }
+            ],
+            "tags": [],
+            "titles": []
+          }
+        ]
+      }
+    },
+    {
+      "method": "GET",
+      "url_prefix": "https://example.invalid/demo/vDEMO002.png",
+      "body_file": "vDEMO002.png",
+      "headers": {"Content-Type": "image/png"}
+    },
+    {
+      "method": "GET",
+      "url_prefix": "https://www.dlsite.com/suggest/",
+      "json": {
+        "work": []
+      }
+    },
+    {
+      "method": "POST",
+      "url_prefix": "https://api.bgm.tv/v0/search/subjects",
+      "json": {
+        "data": []
+      }
+    },
+    {
+      "method": "GET",
+      "url_prefix": "https://store.steampowered.com/api/storesearch/",
+      "json": {
+        "items": []
+      }
+    },
+    {
+      "method": "GET",
+      "url_prefix": "https://f95zone.to/",
+      "json": {
+        "msg": {
+          "data": []
+        }
+      }
+    }
+  ]
+}

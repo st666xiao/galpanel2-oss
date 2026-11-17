@@ -1,0 +1,37 @@
+name: Demo screenshots
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  screenshots:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -r requirements.txt
+      - run: python -m pip install -e . --no-deps
+      - run: python -m pip install pytest
+      - name: Verify demo data and capture isolation
+        run: python -m pytest -q tests/test_demo_library.py
+      - name: Generate fictional library
+        shell: pwsh
+        run: |
+          $drive = if (Test-Path 'D:\') { 'D:' } else { 'C:' }
+          $demo = "$drive\Games"
+          "GP2_DEMO=$demo" >> $env:GITHUB_ENV
+          python tools/make_demo_library.py --out "$demo"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Capture screens
+        run: python tools/take_screenshots.py --demo "$env:GP2_DEMO"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GalPanel2-screenshots
+          path: docs/screenshots/*.png
+          if-no-files-found: error

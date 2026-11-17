@@ -4,7 +4,7 @@ import json
 import sys
 
 from . import api
-from .schema import SCHEMAS
+from .schema import DESCRIPTIONS, SCHEMAS
 
 
 class Parser(argparse.ArgumentParser):
@@ -15,6 +15,20 @@ class Parser(argparse.ArgumentParser):
 def main(argv=None):
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", newline="\n")
+    raw = list(sys.argv[1:] if argv is None else argv)
+    help_flags = {'-h', '--help', 'help'}
+    if (raw and raw[0] in help_flags) or (len(raw) >= 2 and raw[1] in help_flags and raw[0] in SCHEMAS):
+        target = raw[0] if raw and raw[0] in SCHEMAS else None
+        data = {'usage': 'galpanel2-agent [--library PATH] <command> [options]',
+                'library_env': 'GALPANEL2_LIBRARY', 'docs': 'docs/AI-CONTROL.md'}
+        if target:
+            data['command'] = target
+            data['description'] = DESCRIPTIONS.get(target, '')
+            data['schema'] = SCHEMAS[target]
+        else:
+            data['commands'] = {name: DESCRIPTIONS.get(name, '') for name in SCHEMAS}
+        print(json.dumps({'ok': True, 'data': data}, ensure_ascii=False))
+        return 0
     try:
         parser = Parser(description='GalPanel2 JSON agent CLI', add_help=False)
         parser.add_argument('--library', default=argparse.SUPPRESS)

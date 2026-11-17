@@ -1,2 +1,5 @@
 -r requirements.txt
 pytest==8.4.2
+
+# Windows release build
+pyinstaller==6.16.0

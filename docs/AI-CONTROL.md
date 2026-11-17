@@ -1,10 +1,10 @@
 # 给 AI 与操作者的库调控指南
 
-本接口管理本地已有库的元数据，不移动、不删除游戏文件，不运行游戏。使用 Windows + Python 3.13；库路径均为示例。AI 接手时先读本文，再使用 `status`。
+本接口管理本地已有库的元数据，不移动、不删除游戏文件，不运行游戏。使用 Windows 安装包或 Python 3.13 源码版；库路径均为示例。AI 接手时先读本文，再使用 `status`。
 
 ## 接入
 
-先按 README 安装源码。以下路径要换成实际虚拟环境 Python 和库路径；用绝对路径，客户端无需切换工作目录。
+安装包、便携版和源码版的入口与客户端示例见 [部署指南：给 AI 接入](DEPLOY.md#方式-e给-ai-接入)。安装版默认 MCP 为 `%LOCALAPPDATA%\Programs\GalPanel2\galpanel2-mcp.exe`。以下是源码版示例，路径要换成实际虚拟环境 Python 和库路径；用绝对路径，客户端无需切换工作目录。
 
 Claude Code（[官方配置说明](https://code.claude.com/docs/en/mcp)）：
 

@@ -232,3 +232,13 @@ def test_cli_forces_lf_stdout(agent_library, monkeypatch):
     stdout.flush()
     assert buffer.getvalue().endswith(b'\n') and b'\r' not in buffer.getvalue()
     assert json.loads(buffer.getvalue())['ok']
+
+
+def test_help_is_one_json_object(capsys):
+    from galpanel2.agent.__main__ import main as agent_main
+    for argv in (["--help"], ["-h"], ["bind", "--help"]):
+        assert agent_main(argv) == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out["ok"] is True and "usage" in out["data"]
+    agent_main(["--help"])
+    assert "bind" in json.loads(capsys.readouterr().out)["data"]["commands"]

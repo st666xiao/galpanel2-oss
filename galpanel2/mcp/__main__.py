@@ -79,14 +79,17 @@ class Server:
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--library')
-    parser.add_argument('--lock-library', action='store_true', help='禁止 tool 覆盖库路径')
-    args = parser.parse_args(argv)
-    server = Server(args.library, lock_library=args.lock_library)
+    # 先统一编码：打包后的 exe 不读 PYTHONUTF8，中文 --help/错误信息在 GBK/charmap 控制台会崩
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8', newline='\n')
         sys.stdin.reconfigure(encoding='utf-8')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    parser = argparse.ArgumentParser(prog='galpanel2-mcp', description='GalPanel2 MCP stdio server')
+    parser.add_argument('--library', help='库文件路径（也可用 GALPANEL2_LIBRARY）')
+    parser.add_argument('--lock-library', action='store_true', help='禁止 tool 覆盖库路径')
+    args = parser.parse_args(argv)
+    server = Server(args.library, lock_library=args.lock_library)
     for line in sys.stdin:
         if not line.strip():
             continue
