@@ -89,6 +89,6 @@ python -m pytest -q
 ## 许可
 
 - 项目代码：[MIT](LICENSE)，版权人 GalPanel2 contributors。
-- 界面素材：由 Qwen-Image 生成，许可与生成记录单列于 [assets/SOURCES.md](assets/SOURCES.md)。原记录为 Qwen Research License、仅个人自用；不适用代码 MIT，公开再分发前仍需核实授权范围。
+- 界面素材：由项目作者用 AI 自行生成，随项目以 MIT 许可发布，生成记录见 [assets/SOURCES.md](assets/SOURCES.md)。
 - 内置字体：各自采用 SIL Open Font License（OFL），原许可保存在 [字体目录](galpanel2/resources/fonts)。
 - 站点元数据、封面及用户游戏文件不因本项目而获得额外许可。
