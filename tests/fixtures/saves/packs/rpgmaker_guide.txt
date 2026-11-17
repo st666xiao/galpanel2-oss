@@ -1,0 +1,9 @@
+各类型游戏的主要存档存放位置：
+
+硬盘版：
+XP/VX Ace → 与exe同目录或[save]文件夹内
+MV → www/[save]文件夹内
+MZ → exe同目录下的[save]文件夹内
+
+Unity引擎：
+C:\Users\用户名\AppData（隐藏文件夹）\LocalLow\[游戏名]

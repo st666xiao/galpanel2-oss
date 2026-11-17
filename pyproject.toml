@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "galpanel2"
+version = "2.1.0"
+description = "蔵書帖：Windows 本地游戏库管理器，提供资料绑定和安全的 AI 调控接口"
+readme = "README.md"
+license = "MIT"
+authors = [{name = "GalPanel2 contributors"}]
+requires-python = ">=3.13,<3.14"
+dependencies = ["PySide6==6.11.1"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Win32 (MS Windows)",
+  "Operating System :: Microsoft :: Windows",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Games/Entertainment",
+  "Natural Language :: Chinese (Simplified)",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==8.4.2"]
+
+[project.scripts]
+galpanel2 = "galpanel2.__main__:main"
+galpanel2-agent = "galpanel2.agent.__main__:main"
+galpanel2-mcp = "galpanel2.mcp.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["galpanel2*", "assets"]
+
+[tool.setuptools.package-data]
+galpanel2 = ["resources/fonts/*", "resources/icons/*.svg", "resources/*.json"]
+"galpanel2.core" = ["schema*.sql"]
+assets = ["SOURCES.md", "bg/*", "jacket/*", "shiori/*", "texture/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

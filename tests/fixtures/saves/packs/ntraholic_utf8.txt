@@ -1,0 +1,3 @@
+%AppData%\..\LocalLow\TiramisuLovesNtr\Ntraholic
+
+把上面的整行内容复制到资源管理器粘贴，按回车键即可找到游戏存档目录，然后把存档中所有文件覆盖进去
